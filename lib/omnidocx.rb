@@ -33,7 +33,25 @@ module Omnidocx
     }
 
     IMAGE_ELEMENT = '<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" w:rsidR="00F127EA" w:rsidRDefault="00F127EA" w:rsidP="00BF4C96"><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:noProof/><w:lang w:eastAsia="en-IN"/></w:rPr><w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="" cy=""/><wp:effectExtent l="0" t="0" r="2540" b="1905"/><wp:docPr id="" name=""/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="" name=""/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed=""><a:extLst><a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}"><a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0"/></a:ext></a:extLst></a:blip><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="" cy=""/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>'
+    IMAGE_PATTERN = /image1/
 
+    def self.replace_image(image_file, doc_path, final_path)
+      temp_file = Tempfile.new('docxedit-')
+      @document_zip = Zip::File.new(doc_path)
+      return unless @document_zip.glob("**/image*").count
+      Zip::OutputStream.open(temp_file.path) do |zos|
+        @document_zip.entries.each do |e|
+          zos.put_next_entry(e.name)
+          if e.name =~ IMAGE_PATTERN
+            zos.print image_file.read
+          else
+            zos.print e.get_input_stream.read
+          end
+        end
+      end
+      #moving the temporary docx file to the final_path specified by the user
+      FileUtils.mv(temp_file.path, final_path)
+    end
 
     def self.write_images_to_doc(images_to_write=[], doc_path, final_path)
       
@@ -80,7 +98,7 @@ module Omnidocx
         end
 
         images_to_write.each_with_index do |img, index|
-          data = ''
+          data = ''next unless tblStyle
           
           #checking if image path is a url or a local path
           uri = URI.parse(img[:path])
@@ -319,7 +337,7 @@ module Omnidocx
           #updating the stlye ids in the table elements present in the document content XML          
           doc_content.xpath("//w:tbl").each do |tbl_node|
             tblStyle = tbl_node.xpath('.//w:tblStyle').last
-
+            next unless tblStyle
             table_hash["doc#{doc_cnt}"]["#{tblStyle.attributes['val'].value}"] = tbl_cnt
             tblStyle.attributes['val'].value = tblStyle.attributes['val'].value.gsub(/[0-9]+/,"#{tbl_cnt}")
             tbl_cnt+=1
