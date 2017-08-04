@@ -98,7 +98,7 @@ module Omnidocx
         end
 
         images_to_write.each_with_index do |img, index|
-          data = ''next unless tblStyle
+          data = ''
           
           #checking if image path is a url or a local path
           uri = URI.parse(img[:path])
