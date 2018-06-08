@@ -1,9 +1,41 @@
-/.bundle/
-/.yardoc
-/Gemfile.lock
-/_yardoc/
+*.gem
+*.rbc
+.byebug_history
+/.config
 /coverage/
-/doc/
+/InstalledFiles
 /pkg/
 /spec/reports/
+/test/tmp/
+/test/version_tmp/
 /tmp/
+Gemfile.lock
+
+## Specific to RubyMotion:
+.dat*
+.repl_history
+build/
+
+## Documentation cache and generated files:
+/.yardoc/
+/_yardoc/
+/doc/
+/rdoc/
+
+## Environment normalisation:
+/.bundle/
+/vendor/bundle
+/lib/bundler/man/
+
+# unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
+.rvmrc
+
+## Rubymine
+.idea/
+
+# osx specific
+*.DS_Store
+
+# vim
+*.swp
+*.swo
