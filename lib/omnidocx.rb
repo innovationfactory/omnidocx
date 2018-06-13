@@ -455,6 +455,34 @@ module Omnidocx
       FileUtils.mv(temp_file.path, final_path)      
     end
 
+    def self.perform_interpolation(interpolator, template_path, final_path)
+      @template_zip = Zip::File.new(template_path)
+      @template_content = @template_zip.read(DOCUMENT_FILE_PATH)
+
+      #replacing the keys with values in the document content xml
+      @template_content = interpolator.replace_vars(@template_content)
+
+      temp_file = Tempfile.new('docxedit-')
+
+      Zip::OutputStream.open(temp_file.path) do |zos|
+
+        @template_zip.entries.each do |e|
+          unless e.name == DOCUMENT_FILE_PATH
+            #writing the files not needed to be edited back to the new zip
+            zos.put_next_entry(e.name)
+            zos.print e.get_input_stream.read
+          end
+        end
+
+        #writing the updated document content xml to the new zip
+        zos.put_next_entry DOCUMENT_FILE_PATH
+        zos.print @template_content
+      end
+
+      #moving the temporary docx file to the final_path specified by the user
+      FileUtils.mv(temp_file.path, final_path)
+    end
+
     def self.replace_doc_content(replacement_hash={}, template_path, final_path)
       @template_zip = Zip::File.new(template_path)
       @template_content = @template_zip.read(DOCUMENT_FILE_PATH)
